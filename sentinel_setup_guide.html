@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sentinel – Complete Setup Guide</title>
+<style>
+  :root {
+    --dark: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #e3b341;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar { width: 260px; background: var(--card); border-right: 1px solid var(--border); position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; padding: 1.5rem 1rem; }
+  .content { flex: 1; padding: 2rem 3rem; max-width: 900px; }
+
+  /* Sidebar nav */
+  .sidebar-title { font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: .5rem; margin-top: 1.2rem; }
+  .sidebar-title:first-child { margin-top: 0; }
+  .sidebar a { display: block; padding: .35rem .6rem; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: .875rem; transition: all .15s; }
+  .sidebar a:hover { background: rgba(255,255,255,.05); color: var(--text); }
+  .sidebar a.active { background: rgba(88,166,255,.12); color: var(--accent); font-weight: 600; }
+  .sidebar-phase { display: flex; align-items: center; gap: .5rem; color: var(--text); font-size: .8rem; font-weight: 600; margin: 1rem 0 .3rem; }
+  .phase-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Page header */
+  .page-hero { margin-bottom: 2.5rem; }
+  .page-hero h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .page-hero p { color: var(--muted); margin-top: .5rem; font-size: 1rem; }
+
+  /* Phase header */
+  .phase-header { display: flex; align-items: center; gap: .75rem; margin: 2.5rem 0 1rem; padding: .75rem 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+  .phase-badge { background: var(--accent); color: #000; font-weight: 800; font-size: .75rem; padding: .2rem .6rem; border-radius: 20px; white-space: nowrap; }
+  .phase-header h2 { font-size: 1.15rem; font-weight: 700; }
+
+  /* Steps */
+  .step { margin: 1.2rem 0; padding: 1.2rem 1.4rem; background: var(--card); border: 1px solid var(--border); border-radius: 10px; position: relative; }
+  .step-num { position: absolute; top: -12px; left: 1rem; background: var(--accent); color: #000; font-weight: 800; font-size: .7rem; padding: .15rem .5rem; border-radius: 20px; }
+  .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: .6rem; margin-top: .3rem; }
+  .step p { color: var(--muted); font-size: .9rem; margin-bottom: .6rem; }
+  .step p:last-child { margin-bottom: 0; }
+  .step ul, .step ol { color: var(--muted); font-size: .9rem; padding-left: 1.4rem; }
+  .step li { margin-bottom: .3rem; }
+  .step li strong { color: var(--text); }
+
+  /* Code blocks */
+  pre { background: #010409; border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; overflow-x: auto; margin: .8rem 0; font-size: .85rem; line-height: 1.6; }
+  code { font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; }
+  pre code { color: #e6edf3; }
+  .cmd  { color: var(--green); }
+  .cmt  { color: var(--muted); font-style: italic; }
+  .str  { color: var(--yellow); }
+  .kw   { color: var(--accent); }
+  .val  { color: var(--purple); }
+  .path { color: #ffa657; }
+
+  /* Inline code */
+  p code, li code { background: rgba(255,255,255,.08); padding: .1em .35em; border-radius: 4px; font-size: .85em; color: var(--yellow); }
+
+  /* Callouts */
+  .callout { display: flex; gap: .75rem; padding: .9rem 1rem; border-radius: 8px; margin: .8rem 0; font-size: .875rem; }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+  .callout.info    { background: rgba(88,166,255,.1);  border: 1px solid rgba(88,166,255,.3);  }
+  .callout.warn    { background: rgba(227,179,65,.1);  border: 1px solid rgba(227,179,65,.3);  color: #f0c674; }
+  .callout.success { background: rgba(63,185,80,.1);   border: 1px solid rgba(63,185,80,.3);   color: #7ee787; }
+  .callout.danger  { background: rgba(248,81,73,.1);   border: 1px solid rgba(248,81,73,.3);   color: #ff7b72; }
+  .callout div p { margin-bottom: .3rem; }
+  .callout div p:last-child { margin-bottom: 0; }
+
+  /* Image placeholder */
+  .screenshot { background: var(--card); border: 2px dashed var(--border); border-radius: 10px; padding: 2rem; text-align: center; color: var(--muted); margin: 1rem 0; font-size: .875rem; }
+  .screenshot span { display: block; font-size: 2rem; margin-bottom: .5rem; }
+
+  /* Progress tracker */
+  .progress-bar { display: flex; gap: 0; margin: 1.5rem 0 2rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-segment { flex: 1; padding: .6rem .5rem; text-align: center; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .progress-segment.done    { background: rgba(63,185,80,.2);  color: var(--green); }
+  .progress-segment.current { background: rgba(88,166,255,.2); color: var(--accent); }
+  .progress-segment.pending { background: rgba(255,255,255,.03); color: var(--muted); }
+
+  /* Tag badges */
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; text-transform: uppercase; letter-spacing: .5px; margin-right: .3rem; }
+  .tag-win   { background: rgba(88,166,255,.2);  color: var(--accent); }
+  .tag-cloud { background: rgba(63,185,80,.2);   color: var(--green); }
+  .tag-once  { background: rgba(227,179,65,.2);  color: var(--yellow); }
+  .tag-free  { background: rgba(188,140,255,.2); color: var(--purple); }
+
+  /* Two column */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: .8rem 0; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } .content { padding: 1.5rem 1.2rem; } .sidebar { display: none; } }
+
+  /* File tree */
+  .file-tree { background: #010409; border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; font-family: monospace; font-size: .85rem; line-height: 1.8; }
+  .ft-dir  { color: var(--accent); }
+  .ft-file { color: var(--text); }
+  .ft-note { color: var(--muted); }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  /* Check list */
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { display: flex; align-items: flex-start; gap: .6rem; padding: .4rem 0; border-bottom: 1px solid var(--border); font-size: .9rem; color: var(--muted); }
+  .checklist li:last-child { border: none; }
+  .check-icon { color: var(--green); font-size: 1rem; margin-top: .05rem; flex-shrink: 0; }
+
+  /* Section anchor */
+  section { scroll-margin-top: 2rem; }
+
+  .pill { display: inline-flex; align-items: center; gap: .3rem; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: .2rem .65rem; font-size: .8rem; color: var(--muted); margin: .2rem; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<nav class="sidebar">
+  <div style="font-weight:800; font-size:1rem; color:var(--accent); margin-bottom:1.5rem;">🛡️ Sentinel Setup</div>
+
+  <div class="sidebar-title">Overview</div>
+  <a href="#overview">What You'll Build</a>
+  <a href="#requirements">Requirements</a>
+  <a href="#structure">Folder Structure</a>
+
+  <div class="sidebar-title">Phase 1 – Server</div>
+  <a href="#github">GitHub Repo</a>
+  <a href="#render">Deploy to Render</a>
+  <a href="#env-vars">Set Env Variables</a>
+  <a href="#create-admin">Create Admin Account</a>
+
+  <div class="sidebar-title">Phase 2 – Agent (.exe)</div>
+  <a href="#python-install">Install Python</a>
+  <a href="#deps">Install Dependencies</a>
+  <a href="#configure">Configure Agent</a>
+  <a href="#build-exe">Build .exe</a>
+  <a href="#install-service">Install as Service</a>
+
+  <div class="sidebar-title">Phase 3 – Use Dashboard</div>
+  <a href="#login">Login</a>
+  <a href="#secure-mode">Enable Secure Mode</a>
+  <a href="#settings">Set Blocked Apps</a>
+
+  <div class="sidebar-title">Troubleshooting</div>
+  <a href="#trouble">Common Issues</a>
+</nav>
+
+<!-- ══════════════════════ CONTENT ══════════════════════ -->
+<main class="content">
+
+<!-- ─── HERO ──────────────────────────────────────────── -->
+<div class="page-hero">
+  <h1>🛡️ Sentinel – Complete Setup Guide</h1>
+  <p>Zero to a fully running system: cloud server + web dashboard + Windows .exe agent</p>
+  <div style="display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.8rem;">
+    <span class="pill">🪟 Windows 10/11</span>
+    <span class="pill">🐍 Python 3.10+</span>
+    <span class="pill">☁️ Render.com (Free)</span>
+    <span class="pill">⏱ ~45 minutes total</span>
+  </div>
+</div>
+
+<!-- ─── OVERVIEW ──────────────────────────────────────── -->
+<section id="overview">
+<div class="phase-header">
+  <span class="phase-badge">OVERVIEW</span>
+  <h2>What You'll Build</h2>
+</div>
+
+<div class="two-col">
+  <div class="step">
+    <h3>☁️ Cloud Server + Dashboard</h3>
+    <p>A FastAPI backend hosted on Render.com (free). It stores all logs, controls modes, and serves the web dashboard at a public URL you can access from any phone or browser.</p>
+  </div>
+  <div class="step">
+    <h3>🖥️ Windows Agent (.exe)</h3>
+    <p>A single <code>SentinelAgent.exe</code> file that installs as a Windows service on your laptop. Auto-starts on boot, no Python needed to run it.</p>
+  </div>
+</div>
+
+<div class="callout info">
+  <span class="callout-icon">ℹ️</span>
+  <div><p><strong>Order matters:</strong> Deploy the server first, get your server URL, then configure and build the agent. You need the server URL before building the .exe.</p></div>
+</div>
+</section>
+
+<!-- ─── REQUIREMENTS ──────────────────────────────────── -->
+<section id="requirements">
+<div class="phase-header">
+  <span class="phase-badge">BEFORE YOU START</span>
+  <h2>What You Need</h2>
+</div>
+
+<div class="step">
+  <h3>Accounts to Create (all free)</h3>
+  <ul>
+    <li><strong>GitHub account</strong> – <a href="https://github.com" style="color:var(--accent)">github.com</a> — to store your code (Render deploys from GitHub)</li>
+    <li><strong>Render.com account</strong> – <a href="https://render.com" style="color:var(--accent)">render.com</a> — to host your server for free</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>Software on Your Windows PC</h3>
+  <ul>
+    <li><strong>Python 3.10+</strong> — only needed to <em>build</em> the .exe (not to run it)</li>
+    <li><strong>Git</strong> — to push code to GitHub. Download at <a href="https://git-scm.com" style="color:var(--accent)">git-scm.com</a></li>
+    <li><strong>A terminal</strong> — Windows Command Prompt or PowerShell (as Administrator for service install)</li>
+  </ul>
+</div>
+</section>
+
+<!-- ─── FOLDER STRUCTURE ──────────────────────────────── -->
+<section id="structure">
+<div class="phase-header">
+  <span class="phase-badge">REFERENCE</span>
+  <h2>Your Project Folder</h2>
+</div>
+<div class="step">
+  <p>After extracting the zip you downloaded, your folder looks like this. You'll be editing the highlighted files:</p>
+  <div class="file-tree">
+<span class="ft-dir">sentinel/</span>
+├── <span class="ft-dir">agent/</span>
+│   ├── <span class="ft-file">config.py</span>         <span class="ft-note">← you'll edit SERVER_URL here</span>
+│   ├── <span class="ft-file">service.py</span>
+│   ├── <span class="ft-file">monitor.py</span>
+│   ├── <span class="ft-file">camera.py</span>
+│   └── <span class="ft-file">setup_agent.py</span>    <span class="ft-note">← interactive config wizard</span>
+│
+├── <span class="ft-dir">server/</span>
+│   ├── <span class="ft-file">main.py</span>
+│   ├── <span class="ft-file">models.py</span>
+│   ├── <span class="ft-file">database.py</span>
+│   ├── <span class="ft-file">auth.py</span>
+│   └── <span class="ft-dir">templates/dashboard/index.html</span>
+│
+├── <span class="ft-file">requirements.txt</span>
+├── <span class="ft-file">render.yaml</span>          <span class="ft-note">← Render deployment config</span>
+├── <span class="ft-file">sentinel_agent.spec</span>  <span class="ft-note">← PyInstaller build config</span>
+└── <span class="ft-file">README.md</span>
+  </div>
+</div>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════════════
+     PHASE 1 – SERVER DEPLOYMENT
+══════════════════════════════════════════════════════ -->
+<div class="progress-bar">
+  <div class="progress-segment current">Phase 1: Server</div>
+  <div class="progress-segment pending">Phase 2: Agent</div>
+  <div class="progress-segment pending">Phase 3: Use It</div>
+</div>
+
+<section id="github">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 1 — Push Code to GitHub</h2>
+</div>
+
+<div class="callout warn">
+  <span class="callout-icon">⚠️</span>
+  <div><p>Render.com deploys directly from a GitHub repository. You must push your code to GitHub first. This is a one-time step.</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">1A</span>
+  <h3>Create a new GitHub repository</h3>
+  <ol>
+    <li>Go to <a href="https://github.com/new" style="color:var(--accent)">github.com/new</a></li>
+    <li>Name it <code>sentinel</code> (or anything you like)</li>
+    <li>Set it to <strong>Private</strong> (so your security config isn't public)</li>
+    <li>Click <strong>Create repository</strong></li>
+    <li>GitHub shows you a page with commands — leave this tab open</li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">1B</span>
+  <h3>Push your sentinel folder to GitHub</h3>
+  <p>Open Command Prompt or PowerShell. Navigate into your sentinel folder:</p>
+  <pre><code><span class="cmt"># Navigate to your extracted sentinel folder</span>
+<span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel
+
+<span class="cmt"># Initialize git and push</span>
+<span class="cmd">git init</span>
+<span class="cmd">git add</span> .
+<span class="cmd">git commit</span> -m <span class="str">"Initial commit – Sentinel project"</span>
+<span class="cmd">git branch</span> -M main
+<span class="cmd">git remote add</span> origin https://github.com/<span class="val">YOUR-USERNAME</span>/sentinel.git
+<span class="cmd">git push</span> -u origin main</code></pre>
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <div><p>Replace <code>YOUR-USERNAME</code> with your actual GitHub username. Git will ask for your GitHub username and password (or a Personal Access Token if you have 2FA enabled).</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── RENDER DEPLOY ──────────────────────────────────── -->
+<section id="render">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 2 — Deploy Server on Render.com</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">2A</span>
+  <h3>Sign up / Log in to Render</h3>
+  <ol>
+    <li>Go to <a href="https://render.com" style="color:var(--accent)">render.com</a></li>
+    <li>Click <strong>Get Started for Free</strong></li>
+    <li>Sign up with your <strong>GitHub account</strong> (easiest — it connects automatically)</li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">2B</span>
+  <h3>Create a new Web Service</h3>
+  <ol>
+    <li>In your Render dashboard, click <strong>+ New</strong> → <strong>Web Service</strong></li>
+    <li>Click <strong>Connect a repository</strong></li>
+    <li>Find and select your <code>sentinel</code> repo</li>
+    <li>Click <strong>Connect</strong></li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">2C</span>
+  <h3>Fill in the service settings</h3>
+  <p>On the configuration page, fill in these fields exactly:</p>
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:.875rem;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="text-align:left; padding:.5rem .8rem; color:var(--muted); font-weight:600;">Field</th>
+          <th style="text-align:left; padding:.5rem .8rem; color:var(--muted); font-weight:600;">Value to enter</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><strong>Name</strong></td>
+          <td style="padding:.5rem .8rem;"><code>sentinel-server</code></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><strong>Region</strong></td>
+          <td style="padding:.5rem .8rem;">Choose closest to you</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><strong>Branch</strong></td>
+          <td style="padding:.5rem .8rem;"><code>main</code></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><strong>Runtime</strong></td>
+          <td style="padding:.5rem .8rem;"><code>Python 3</code></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><strong>Build Command</strong></td>
+          <td style="padding:.5rem .8rem;"><code>pip install -r requirements.txt</code></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><strong>Start Command</strong></td>
+          <td style="padding:.5rem .8rem;"><code>uvicorn server.main:app --host 0.0.0.0 --port $PORT</code></td>
+        </tr>
+        <tr>
+          <td style="padding:.5rem .8rem;"><strong>Instance Type</strong></td>
+          <td style="padding:.5rem .8rem;"><code>Free</code> ← make sure this is selected</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn" style="margin-top:.8rem;">
+    <span class="callout-icon">⚠️</span>
+    <div><p><strong>Do not click "Create Web Service" yet.</strong> You need to add environment variables first (next step).</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── ENV VARS ───────────────────────────────────────── -->
+<section id="env-vars">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 3 — Set Environment Variables</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">3A</span>
+  <h3>Scroll down to "Environment Variables" on the Render setup page</h3>
+  <p>Still on the same Render configuration page, scroll down and find the <strong>Environment Variables</strong> section. Add these three variables by clicking <strong>Add Environment Variable</strong> for each:</p>
+
+  <div style="overflow-x:auto; margin-top:.8rem;">
+    <table style="width:100%; border-collapse:collapse; font-size:.875rem;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="text-align:left; padding:.5rem .8rem; color:var(--muted);">Key</th>
+          <th style="text-align:left; padding:.5rem .8rem; color:var(--muted);">Value</th>
+          <th style="text-align:left; padding:.5rem .8rem; color:var(--muted);">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><code>SECRET_KEY</code></td>
+          <td style="padding:.5rem .8rem;"><em>Generate one (see below)</em></td>
+          <td style="padding:.5rem .8rem; color:var(--muted);">Signs JWT tokens</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><code>DEVICE_API_TOKEN</code></td>
+          <td style="padding:.5rem .8rem;"><em>Make up a strong password</em></td>
+          <td style="padding:.5rem .8rem; color:var(--muted);">Agent uses this to authenticate — write it down!</td>
+        </tr>
+        <tr>
+          <td style="padding:.5rem .8rem;"><code>TOKEN_EXPIRE_MINUTES</code></td>
+          <td style="padding:.5rem .8rem;"><code>1440</code></td>
+          <td style="padding:.5rem .8rem; color:var(--muted);">Dashboard session = 24 hours</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">3B</span>
+  <h3>Generate a SECRET_KEY</h3>
+  <p>Open Python on your PC and run this one-liner to generate a secure random key:</p>
+  <pre><code><span class="cmt"># Open Command Prompt and run:</span>
+<span class="cmd">python</span> -c <span class="str">"import secrets; print(secrets.token_hex(32))"</span>
+
+<span class="cmt"># Example output (yours will be different):</span>
+<span class="val">a3f8c2e1d4b7a9f0e2c5d8a1b4f7e0c3a6d9b2e5f8c1d4a7b0e3f6c9d2a5b8e1</span></code></pre>
+  <p>Copy that output. Paste it as the value for <code>SECRET_KEY</code> in Render.</p>
+</div>
+
+<div class="step">
+  <span class="step-num">3C</span>
+  <h3>Choose a DEVICE_API_TOKEN</h3>
+  <p>This is like a password your agent uses to talk to the server. Make something strong and <strong>write it down</strong> — you'll need it again when configuring the agent.</p>
+  <pre><code><span class="cmt"># Generate one the same way:</span>
+<span class="cmd">python</span> -c <span class="str">"import secrets; print(secrets.token_urlsafe(24))"</span>
+
+<span class="cmt"># Example output:</span>
+<span class="val">K9mXqR2vLwZpN7bYcT4sAeD1</span></code></pre>
+  <div class="callout success">
+    <span class="callout-icon">✅</span>
+    <div><p>After adding all 3 environment variables, scroll back up and click <strong>"Create Web Service"</strong>. Render will start deploying. This takes 2–4 minutes.</p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">3D</span>
+  <h3>Get your server URL</h3>
+  <p>After deployment finishes (you'll see <strong style="color:var(--green);">Live</strong> in green), your server URL is shown at the top of the page:</p>
+  <pre><code><span class="cmt"># Your URL will look like this:</span>
+https://sentinel-server.onrender.com
+
+<span class="cmt"># Or with a random suffix:</span>
+https://sentinel-server-abc1.onrender.com</code></pre>
+  <div class="callout warn">
+    <span class="callout-icon">📋</span>
+    <div><p><strong>Copy and save this URL.</strong> You'll need it in Phase 2 when configuring the agent.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── CREATE ADMIN ───────────────────────────────────── -->
+<section id="create-admin">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 4 — Create Your Admin Account</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">4A</span>
+  <h3>Open your server's API page</h3>
+  <p>Go to your server URL and add <code>/docs</code> at the end:</p>
+  <pre><code>https://sentinel-server.onrender.com<span class="val">/docs</span></code></pre>
+  <p>This opens the automatic API documentation (Swagger UI). You'll see a list of all API endpoints.</p>
+</div>
+
+<div class="step">
+  <span class="step-num">4B</span>
+  <h3>Create admin account via /auth/setup</h3>
+  <ol>
+    <li>In the <code>/docs</code> page, scroll to find <strong>POST /auth/setup</strong></li>
+    <li>Click it → click <strong>"Try it out"</strong></li>
+    <li>Replace the example body with your details:</li>
+  </ol>
+  <pre><code>{
+  <span class="kw">"username"</span>: <span class="str">"admin"</span>,
+  <span class="kw">"password"</span>: <span class="str">"YourStrongPassword123!"</span>
+}</code></pre>
+  <ol start="4">
+    <li>Click <strong>Execute</strong></li>
+    <li>You should see: <code style="color:var(--green);">{"detail": "Admin created successfully."}</code></li>
+  </ol>
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <div><p>This endpoint only works <strong>once</strong>. After the first admin is created, it returns an error. This is a security feature.</p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">4C</span>
+  <h3>Test your dashboard</h3>
+  <p>Visit your server URL (without /docs):</p>
+  <pre><code>https://sentinel-server.onrender.com</code></pre>
+  <p>You should see the Sentinel login page. Log in with the username and password you just created.</p>
+  <div class="callout success">
+    <span class="callout-icon">🎉</span>
+    <div><p><strong>Phase 1 complete!</strong> Your server and dashboard are live. Now let's set up the Windows agent.</p></div>
+  </div>
+</div>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════════════
+     PHASE 2 – AGENT BUILD
+══════════════════════════════════════════════════════ -->
+<div class="progress-bar">
+  <div class="progress-segment done">Phase 1: Server ✓</div>
+  <div class="progress-segment current">Phase 2: Agent</div>
+  <div class="progress-segment pending">Phase 3: Use It</div>
+</div>
+
+<section id="python-install">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 5 — Install Python on Windows</h2>
+</div>
+
+<div class="callout info">
+  <span class="callout-icon">ℹ️</span>
+  <div><p>Python is only needed on your PC to <strong>build</strong> the .exe file. Once the .exe is built, you can run it on any Windows machine — no Python required there.</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">5A</span>
+  <h3>Download and install Python</h3>
+  <ol>
+    <li>Go to <a href="https://python.org/downloads" style="color:var(--accent)">python.org/downloads</a></li>
+    <li>Click <strong>Download Python 3.12.x</strong> (latest 3.x)</li>
+    <li>Run the installer</li>
+    <li><strong style="color:var(--yellow);">IMPORTANT:</strong> On the first screen, check ✅ <strong>"Add Python to PATH"</strong> before clicking Install Now</li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">5B</span>
+  <h3>Verify Python installed correctly</h3>
+  <p>Open a new Command Prompt and run:</p>
+  <pre><code><span class="cmd">python</span> --version
+<span class="cmt"># Should print: Python 3.12.x</span>
+
+<span class="cmd">pip</span> --version
+<span class="cmt"># Should print: pip 24.x from ...</span></code></pre>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div><p>If you get <code>"python is not recognized"</code>, close the Command Prompt and open a new one. If still failing, re-run the Python installer and check the "Add to PATH" box.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── INSTALL DEPS ───────────────────────────────────── -->
+<section id="deps">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 6 — Install Python Dependencies</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">6A</span>
+  <h3>Navigate to your sentinel folder</h3>
+  <pre><code><span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel
+<span class="cmt"># Replace the path with wherever you extracted the project</span></code></pre>
+</div>
+
+<div class="step">
+  <span class="step-num">6B</span>
+  <h3>Install all dependencies</h3>
+  <pre><code><span class="cmd">pip install</span> -r requirements.txt
+<span class="cmt"># This will take 2-5 minutes — downloads all packages</span></code></pre>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div><p>If you see an error about <code>pywin32</code>, run this extra command:<br/><code>pip install pywin32</code> then <code>python Scripts/pywin32_postinstall.py -install</code></p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">6C</span>
+  <h3>Install PyInstaller (for building the .exe)</h3>
+  <pre><code><span class="cmd">pip install</span> pyinstaller
+<span class="cmt"># Verify it installed:</span>
+<span class="cmd">pyinstaller</span> --version
+<span class="cmt"># Should print: 6.x.x</span></code></pre>
+</div>
+</section>
+
+<!-- ─── CONFIGURE ──────────────────────────────────────── -->
+<section id="configure">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 7 — Configure the Agent</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">7A</span>
+  <h3>Edit the default server URL in config.py</h3>
+  <p>Open <code>sentinel/agent/config.py</code> in Notepad or any text editor. Find this line and replace it with your Render URL:</p>
+  <pre><code><span class="cmt"># Find this line (around line 18):</span>
+<span class="str">"server_url"</span>: <span class="str">"https://your-sentinel-server.onrender.com"</span>,
+
+<span class="cmt"># Change it to YOUR actual Render URL:</span>
+<span class="str">"server_url"</span>: <span class="str">"https://sentinel-server-abc1.onrender.com"</span>,</code></pre>
+  <p>Save the file.</p>
+</div>
+
+<div class="step">
+  <span class="step-num">7B</span>
+  <h3>Run the setup wizard</h3>
+  <p>Now run the interactive setup script to set your token and register the device:</p>
+  <pre><code><span class="cmd">cd</span> sentinel\agent
+<span class="cmd">python</span> setup_agent.py</code></pre>
+  <p>The wizard will ask you 3 questions. Here's what to enter:</p>
+  <div style="overflow-x:auto; margin:.8rem 0;">
+    <table style="width:100%; border-collapse:collapse; font-size:.875rem;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="text-align:left; padding:.5rem .8rem; color:var(--muted);">Prompt</th>
+          <th style="text-align:left; padding:.5rem .8rem; color:var(--muted);">What to enter</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><code>Server URL [current]:</code></td>
+          <td style="padding:.5rem .8rem;">Press Enter (already set in 7A), or paste your URL again</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.5rem .8rem;"><code>Device name [current]:</code></td>
+          <td style="padding:.5rem .8rem;">Give your laptop a name, e.g. <code>Johns-Laptop</code></td>
+        </tr>
+        <tr>
+          <td style="padding:.5rem .8rem;"><code>Device API token:</code></td>
+          <td style="padding:.5rem .8rem;">Paste the <code>DEVICE_API_TOKEN</code> you set on Render (Step 3B)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>If the connection test succeeds, you'll see: <code style="color:var(--green);">✅ Device registered successfully!</code></p>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div><p>If you see <code>❌ Authentication failed</code>, double-check that the token you entered here exactly matches the <code>DEVICE_API_TOKEN</code> you set in Render's environment variables.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── BUILD EXE ──────────────────────────────────────── -->
+<section id="build-exe">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 8 — Build the .exe File</h2>
+</div>
+
+<div class="callout info">
+  <span class="callout-icon">ℹ️</span>
+  <div><p>PyInstaller bundles your Python scripts + all dependencies into a single <code>.exe</code> file. This takes 2–5 minutes.</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">8A</span>
+  <h3>Go back to the root sentinel folder and run PyInstaller</h3>
+  <pre><code><span class="cmt"># Navigate to the root sentinel folder (not the agent subfolder)</span>
+<span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel
+
+<span class="cmt"># Build using the spec file</span>
+<span class="cmd">pyinstaller</span> sentinel_agent.spec</code></pre>
+</div>
+
+<div class="step">
+  <span class="step-num">8B</span>
+  <h3>Find your .exe</h3>
+  <p>After PyInstaller finishes, the executable is at:</p>
+  <pre><code><span class="path">sentinel\dist\SentinelAgent.exe</span></code></pre>
+  <p>This is the only file you need to install the service. You can copy it anywhere on your PC.</p>
+</div>
+
+<div class="step">
+  <span class="step-num">8C</span>
+  <h3>If the build fails</h3>
+  <p>The most common issue is a missing import. Try this alternative build command that works more reliably:</p>
+  <pre><code><span class="cmt"># Alternative: build directly (skip the .spec file)</span>
+<span class="cmd">pyinstaller</span> ^
+  --onefile ^
+  --name SentinelAgent ^
+  --hidden-import win32timezone ^
+  --hidden-import watchdog.observers.winapi ^
+  --paths agent ^
+  agent\service.py</code></pre>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div><p>If you get errors about <code>cv2</code> (OpenCV) not found, install it: <code>pip install opencv-python</code> and try again.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── INSTALL SERVICE ────────────────────────────────── -->
+<section id="install-service">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 9 — Install as Windows Service</h2>
+</div>
+
+<div class="callout danger">
+  <span class="callout-icon">🔑</span>
+  <div><p><strong>This step requires Administrator privileges.</strong> Right-click Command Prompt → "Run as administrator".</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">9A</span>
+  <h3>Open Administrator Command Prompt</h3>
+  <ol>
+    <li>Press <strong>Windows key</strong></li>
+    <li>Type <strong>cmd</strong></li>
+    <li>Right-click <strong>Command Prompt</strong> → <strong>"Run as administrator"</strong></li>
+    <li>Click Yes on the UAC prompt</li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">9B</span>
+  <h3>Navigate to the .exe and install</h3>
+  <pre><code><span class="cmt"># Navigate to where your .exe is</span>
+<span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel\dist
+
+<span class="cmt"># Install the Windows service</span>
+<span class="cmd">SentinelAgent.exe</span> install
+
+<span class="cmt"># Start the service</span>
+<span class="cmd">SentinelAgent.exe</span> start</code></pre>
+</div>
+
+<div class="step">
+  <span class="step-num">9C</span>
+  <h3>Verify the service is running</h3>
+  <pre><code><span class="cmt"># Check service status</span>
+<span class="cmd">sc</span> query SentinelAgent
+
+<span class="cmt"># You should see:</span>
+<span class="cmt"># STATE : 4  RUNNING</span></code></pre>
+  <p>You can also open <strong>Task Manager → Services tab</strong> and search for <strong>SentinelAgent</strong>.</p>
+  <div class="callout success">
+    <span class="callout-icon">✅</span>
+    <div><p>The service is now installed and will <strong>auto-start every time Windows boots</strong>. If the service crashes, Windows will automatically restart it (recovery is configured during install).</p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">9D</span>
+  <h3>Service management commands (for reference)</h3>
+  <pre><code><span class="cmt"># Stop the service</span>
+<span class="cmd">SentinelAgent.exe</span> stop
+
+<span class="cmt"># Restart the service</span>
+<span class="cmd">SentinelAgent.exe</span> restart
+
+<span class="cmt"># Remove the service entirely</span>
+<span class="cmd">SentinelAgent.exe</span> remove
+
+<span class="cmt"># Check logs (stored here)</span>
+<span class="cmd">type</span> <span class="path">%APPDATA%\..\Local\sentinel\agent\data\logs\sentinel_service.log</span></code></pre>
+</div>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════════════
+     PHASE 3 – USING THE DASHBOARD
+══════════════════════════════════════════════════════ -->
+<div class="progress-bar">
+  <div class="progress-segment done">Phase 1: Server ✓</div>
+  <div class="progress-segment done">Phase 2: Agent ✓</div>
+  <div class="progress-segment current">Phase 3: Use It</div>
+</div>
+
+<section id="login">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--yellow);color:#000;">PHASE 3</span>
+  <h2>Step 10 — Log Into Your Dashboard</h2>
+</div>
+
+<div class="step">
+  <h3>Access from anywhere</h3>
+  <p>Open any browser on any device (phone, tablet, another computer) and go to:</p>
+  <pre><code>https://sentinel-server.onrender.com</code></pre>
+  <p>Log in with the admin username and password you created in Step 4.</p>
+  <p>After a few seconds (up to 15), your device should appear in the <strong>Dashboard</strong> and show as <span style="background:rgba(63,185,80,.2); color:var(--green); padding:.1em .4em; border-radius:4px; font-size:.85em;">Online</span>.</p>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div><p><strong>First load may be slow (30–60 sec).</strong> Render's free tier "spins down" after 15 minutes of inactivity. The first request wakes it up. Subsequent loads are instant.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── SECURE MODE ────────────────────────────────────── -->
+<section id="secure-mode">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--yellow);color:#000;">PHASE 3</span>
+  <h2>Step 11 — Enable Secure Mode</h2>
+</div>
+
+<div class="step">
+  <h3>Toggle mode from the dashboard</h3>
+  <ol>
+    <li>On the Dashboard page, find your device in the table</li>
+    <li>Click <strong>"Set Secure"</strong> button next to it</li>
+    <li>Confirm the dialog</li>
+    <li>The mode badge changes to <span style="background:rgba(248,81,73,.2); color:var(--red); padding:.1em .4em; border-radius:4px; font-size:.85em;">SECURE</span></li>
+    <li>Within 10 seconds, the agent on your laptop receives the change and activates protection</li>
+  </ol>
+</div>
+
+<div class="step">
+  <h3>What happens in Secure Mode</h3>
+  <ul>
+    <li>Blocked apps are <strong>killed immediately</strong> if they launch</li>
+    <li>Any file write/create in protected folders is <strong>detected and reverted</strong></li>
+    <li>A webcam photo is captured and uploaded on every security event</li>
+    <li>All events are logged and visible in the Logs tab</li>
+  </ul>
+</div>
+</section>
+
+<!-- ─── SETTINGS ───────────────────────────────────────── -->
+<section id="settings">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--yellow);color:#000;">PHASE 3</span>
+  <h2>Step 12 — Configure Blocked Apps & Protected Folders</h2>
+</div>
+
+<div class="step">
+  <h3>Go to Settings tab</h3>
+  <ol>
+    <li>Click <strong>Settings</strong> in the sidebar (or bottom nav on mobile)</li>
+    <li>Select your device from the dropdown</li>
+    <li>Two panels appear: <strong>Blocked Applications</strong> and <strong>Protected Folders</strong></li>
+  </ol>
+</div>
+
+<div class="two-col">
+  <div class="step">
+    <h3>Blocked Applications</h3>
+    <p>Enter executable names (one per line). Example:</p>
+    <pre style="font-size:.8rem;"><code>chrome.exe
+excel.exe
+outlook.exe
+teams.exe
+discord.exe</code></pre>
+    <p>In Secure Mode these processes will be killed instantly.</p>
+  </div>
+  <div class="step">
+    <h3>Protected Folders</h3>
+    <p>Enter full Windows paths (one per line). Example:</p>
+    <pre style="font-size:.8rem;"><code>C:\Users\John\Documents\Private
+C:\Users\John\Desktop\Secrets
+D:\Work\Confidential</code></pre>
+    <p>Any file changes here trigger an alert + photo.</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>Save settings</h3>
+  <p>Click <strong>Save</strong> on each panel. Changes sync to the agent within 10 seconds (the next poll cycle).</p>
+  <div class="callout success">
+    <span class="callout-icon">🎉</span>
+    <div><p><strong>You're all set!</strong> Sentinel is fully deployed and running. Your laptop is now remotely protected.</p></div>
+  </div>
+</div>
+</section>
+
+<hr/>
+
+<!-- ─── TROUBLESHOOTING ────────────────────────────────── -->
+<section id="trouble">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--red);color:#fff;">TROUBLESHOOTING</span>
+  <h2>Common Issues & Fixes</h2>
+</div>
+
+<div class="step">
+  <h3>🔴 Device shows as Offline in dashboard</h3>
+  <ul>
+    <li>Check the service is running: <code>sc query SentinelAgent</code></li>
+    <li>Check the log file for errors: <code>type C:\Users\YourName\sentinel\agent\data\logs\sentinel_service.log</code></li>
+    <li>Verify your server URL in <code>agent/config.py</code> and in <code>agent/data/agent_config.json</code></li>
+    <li>Try pinging the server: open browser → go to your Render URL → you should see the login page</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Render deploy failed (red "Failed" status)</h3>
+  <ul>
+    <li>Click on the deploy → scroll down to see the build log</li>
+    <li>Most common cause: <strong>wrong Start Command</strong>. Make sure it's exactly: <code>uvicorn server.main:app --host 0.0.0.0 --port $PORT</code></li>
+    <li>Check that <code>requirements.txt</code> is in the root of the repo (not inside a subfolder)</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 "python is not recognized" when installing</h3>
+  <ul>
+    <li>Re-run the Python installer → check <strong>"Add Python to PATH"</strong> → restart your PC</li>
+    <li>Or try using <code>py</code> instead of <code>python</code> in all commands</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 PyInstaller build fails with import errors</h3>
+  <pre><code><span class="cmt"># Run this to get more detailed error info:</span>
+<span class="cmd">pyinstaller</span> sentinel_agent.spec --log-level DEBUG
+
+<span class="cmt"># Fix missing imports by adding --hidden-import:</span>
+<span class="cmd">pip install</span> &lt;missing-package-name&gt;</code></pre>
+</div>
+
+<div class="step">
+  <h3>🔴 Service install says "Access Denied"</h3>
+  <p>You must run Command Prompt as <strong>Administrator</strong>:</p>
+  <ul>
+    <li>Search "cmd" in Start menu</li>
+    <li>Right-click → <strong>Run as administrator</strong></li>
+    <li>Try the install command again</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Dashboard loads but no devices appear</h3>
+  <ul>
+    <li>Wait 15 seconds then refresh — the agent polls every 10 seconds</li>
+    <li>Make sure you ran <code>setup_agent.py</code> before building the .exe</li>
+    <li>Check Render logs: Render dashboard → your service → <strong>Logs</strong> tab — look for registration requests</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Camera not capturing photos</h3>
+  <ul>
+    <li>Ensure <code>opencv-python</code> is installed: <code>pip install opencv-python</code></li>
+    <li>Test your camera: <code>python -c "import cv2; cap = cv2.VideoCapture(0); print('OK' if cap.isOpened() else 'No camera')"</code></li>
+    <li>Close any other apps using the camera (Zoom, Teams, etc.)</li>
+    <li>Rebuild the .exe after installing opencv</li>
+  </ul>
+</div>
+
+<!-- Final checklist -->
+<div class="phase-header" style="margin-top:2rem;">
+  <span class="phase-badge" style="background:var(--green);color:#000;">CHECKLIST</span>
+  <h2>Everything Working? Final Checklist</h2>
+</div>
+<div class="step">
+  <ul class="checklist">
+    <li><span class="check-icon">✓</span> <span>Render server shows <strong style="color:var(--green);">Live</strong> status</span></li>
+    <li><span class="check-icon">✓</span> <span>Dashboard loads at <code>https://your-server.onrender.com</code></span></li>
+    <li><span class="check-icon">✓</span> <span>Admin login works</span></li>
+    <li><span class="check-icon">✓</span> <span><code>sc query SentinelAgent</code> shows <strong>RUNNING</strong></span></li>
+    <li><span class="check-icon">✓</span> <span>Device appears in dashboard (may take up to 15 seconds)</span></li>
+    <li><span class="check-icon">✓</span> <span>Mode toggle works (Open ↔ Secure)</span></li>
+    <li><span class="check-icon">✓</span> <span>Logs appear in Logs tab after toggling mode</span></li>
+    <li><span class="check-icon">✓</span> <span>Blocked app gets killed when launched in Secure Mode</span></li>
+    <li><span class="check-icon">✓</span> <span>Intruder photo appears in Photos tab after security event</span></li>
+  </ul>
+</div>
+
+</section>
+
+</main>
+</div>
+
+<script>
+// Highlight active sidebar link on scroll
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('.sidebar a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+  links.forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
