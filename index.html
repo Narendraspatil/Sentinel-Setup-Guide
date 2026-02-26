@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sentinel – Complete Setup Guide</title>
+<style>
+  :root {
+    --dark: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #e3b341;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar { width: 260px; background: var(--card); border-right: 1px solid var(--border); position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; padding: 1.5rem 1rem; }
+  .content { flex: 1; padding: 2rem 3rem; max-width: 900px; }
+
+  .sidebar-title { font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: .5rem; margin-top: 1.2rem; }
+  .sidebar-title:first-child { margin-top: 0; }
+  .sidebar a { display: block; padding: .35rem .6rem; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: .875rem; transition: all .15s; }
+  .sidebar a:hover { background: rgba(255,255,255,.05); color: var(--text); }
+  .sidebar a.active { background: rgba(88,166,255,.12); color: var(--accent); font-weight: 600; }
+
+  .page-hero { margin-bottom: 2.5rem; }
+  .page-hero h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .page-hero p { color: var(--muted); margin-top: .5rem; font-size: 1rem; }
+
+  .phase-header { display: flex; align-items: center; gap: .75rem; margin: 2.5rem 0 1rem; padding: .75rem 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+  .phase-badge { background: var(--accent); color: #000; font-weight: 800; font-size: .75rem; padding: .2rem .6rem; border-radius: 20px; white-space: nowrap; }
+  .phase-header h2 { font-size: 1.15rem; font-weight: 700; }
+
+  .step { margin: 1.2rem 0; padding: 1.2rem 1.4rem; background: var(--card); border: 1px solid var(--border); border-radius: 10px; position: relative; }
+  .step-num { position: absolute; top: -12px; left: 1rem; background: var(--accent); color: #000; font-weight: 800; font-size: .7rem; padding: .15rem .5rem; border-radius: 20px; }
+  .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: .6rem; margin-top: .3rem; }
+  .step p { color: var(--muted); font-size: .9rem; margin-bottom: .6rem; }
+  .step p:last-child { margin-bottom: 0; }
+  .step ul, .step ol { color: var(--muted); font-size: .9rem; padding-left: 1.4rem; }
+  .step li { margin-bottom: .3rem; }
+  .step li strong { color: var(--text); }
+
+  pre { background: #010409; border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; overflow-x: auto; margin: .8rem 0; font-size: .85rem; line-height: 1.6; }
+  code { font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; }
+  pre code { color: #e6edf3; }
+  .cmd  { color: var(--green); }
+  .cmt  { color: var(--muted); font-style: italic; }
+  .str  { color: var(--yellow); }
+  .kw   { color: var(--accent); }
+  .val  { color: var(--purple); }
+  .path { color: #ffa657; }
+
+  p code, li code { background: rgba(255,255,255,.08); padding: .1em .35em; border-radius: 4px; font-size: .85em; color: var(--yellow); }
+
+  .callout { display: flex; gap: .75rem; padding: .9rem 1rem; border-radius: 8px; margin: .8rem 0; font-size: .875rem; }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+  .callout.info    { background: rgba(88,166,255,.1);  border: 1px solid rgba(88,166,255,.3);  }
+  .callout.warn    { background: rgba(227,179,65,.1);  border: 1px solid rgba(227,179,65,.3);  color: #f0c674; }
+  .callout.success { background: rgba(63,185,80,.1);   border: 1px solid rgba(63,185,80,.3);   color: #7ee787; }
+  .callout.danger  { background: rgba(248,81,73,.1);   border: 1px solid rgba(248,81,73,.3);   color: #ff7b72; }
+  .callout div p { margin-bottom: .3rem; }
+  .callout div p:last-child { margin-bottom: 0; }
+
+  .progress-bar { display: flex; gap: 0; margin: 1.5rem 0 2rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-segment { flex: 1; padding: .6rem .5rem; text-align: center; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .progress-segment.done    { background: rgba(63,185,80,.2);  color: var(--green); }
+  .progress-segment.current { background: rgba(88,166,255,.2); color: var(--accent); }
+  .progress-segment.pending { background: rgba(255,255,255,.03); color: var(--muted); }
+
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; text-transform: uppercase; letter-spacing: .5px; margin-right: .3rem; }
+  .tag-win   { background: rgba(88,166,255,.2);  color: var(--accent); }
+  .tag-cloud { background: rgba(63,185,80,.2);   color: var(--green); }
+  .tag-once  { background: rgba(227,179,65,.2);  color: var(--yellow); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: .8rem 0; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } .content { padding: 1.5rem 1.2rem; } .sidebar { display: none; } }
+
+  .file-tree { background: #010409; border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; font-family: monospace; font-size: .85rem; line-height: 1.8; }
+  .ft-dir  { color: var(--accent); }
+  .ft-file { color: var(--text); }
+  .ft-note { color: var(--muted); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { display: flex; align-items: flex-start; gap: .6rem; padding: .4rem 0; border-bottom: 1px solid var(--border); font-size: .9rem; color: var(--muted); }
+  .checklist li:last-child { border: none; }
+  .check-icon { color: var(--green); font-size: 1rem; margin-top: .05rem; flex-shrink: 0; }
+
+  section { scroll-margin-top: 2rem; }
+  .pill { display: inline-flex; align-items: center; gap: .3rem; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: .2rem .65rem; font-size: .8rem; color: var(--muted); margin: .2rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th { text-align: left; padding: .5rem .8rem; color: var(--muted); font-weight: 600; }
+  td { padding: .5rem .8rem; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<nav class="sidebar">
+  <div style="font-weight:800; font-size:1rem; color:var(--accent); margin-bottom:1.5rem;">🛡️ Sentinel Setup</div>
+
+  <div class="sidebar-title">Overview</div>
+  <a href="#overview">What You'll Build</a>
+  <a href="#requirements">Requirements</a>
+  <a href="#structure">Folder Structure</a>
+  <a href="#how-auth-works">How Auth Works</a>
+
+  <div class="sidebar-title">Phase 1 – Server</div>
+  <a href="#github">Push to GitHub</a>
+  <a href="#railway-project">Create Railway Project</a>
+  <a href="#railway-postgres">Add PostgreSQL</a>
+  <a href="#railway-env">Set Env Variables</a>
+  <a href="#railway-deploy">Deploy & Get URL</a>
+  <a href="#create-admin">Create Admin Account</a>
+
+  <div class="sidebar-title">Phase 2 – Agent (Windows)</div>
+  <a href="#python-install">Install Python</a>
+  <a href="#agent-deps">Install Dependencies</a>
+  <a href="#agent-setup">Run Setup Wizard</a>
+  <a href="#install-service">Install as Service</a>
+  <a href="#build-exe">Build .exe (Optional)</a>
+
+  <div class="sidebar-title">Phase 3 – Use Dashboard</div>
+  <a href="#login">Login</a>
+  <a href="#secure-mode">Enable Secure Mode</a>
+  <a href="#settings">Blocked Apps & Folders</a>
+
+  <div class="sidebar-title">Reference</div>
+  <a href="#trouble">Troubleshooting</a>
+  <a href="#checklist">Final Checklist</a>
+</nav>
+
+<!-- ══════════════════════ CONTENT ══════════════════════ -->
+<main class="content">
+
+<!-- ─── HERO ─────────────────────────────────────────── -->
+<div class="page-hero">
+  <h1>🛡️ Sentinel – Complete Setup Guide</h1>
+  <p>Zero to a fully running system: Railway server + PostgreSQL + web dashboard + Windows agent</p>
+  <div style="display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.8rem;">
+    <span class="pill">🪟 Windows 10/11</span>
+    <span class="pill">🐍 Python 3.10+</span>
+    <span class="pill">🚂 Railway.app</span>
+    <span class="pill">🐘 PostgreSQL</span>
+    <span class="pill">⏱ ~45 minutes</span>
+  </div>
+</div>
+
+<!-- ─── OVERVIEW ─────────────────────────────────────── -->
+<section id="overview">
+<div class="phase-header">
+  <span class="phase-badge">OVERVIEW</span>
+  <h2>What You'll Build</h2>
+</div>
+
+<div class="two-col">
+  <div class="step">
+    <h3>☁️ Cloud Server + Dashboard</h3>
+    <p>A FastAPI backend on Railway with a PostgreSQL database. Stores all logs and photos, controls device modes, and serves the web dashboard at a permanent public URL.</p>
+  </div>
+  <div class="step">
+    <h3>🖥️ Windows Agent</h3>
+    <p>Python scripts that run as a Windows Service on your laptop. Auto-starts on boot. Polls the server every 10 seconds for mode changes, buffers logs offline, and captures webcam photos on security events.</p>
+  </div>
+</div>
+
+<div class="callout info">
+  <span class="callout-icon">ℹ️</span>
+  <div><p><strong>Order matters:</strong> Deploy the server first and get your server URL + <code>REGISTRATION_TOKEN</code>. You need both before configuring the agent.</p></div>
+</div>
+</section>
+
+<!-- ─── REQUIREMENTS ─────────────────────────────────── -->
+<section id="requirements">
+<div class="phase-header">
+  <span class="phase-badge">BEFORE YOU START</span>
+  <h2>What You Need</h2>
+</div>
+
+<div class="step">
+  <h3>Accounts to Create (all free)</h3>
+  <ul>
+    <li><strong>GitHub account</strong> – <a href="https://github.com" style="color:var(--accent)">github.com</a> — Railway deploys from GitHub</li>
+    <li><strong>Railway account</strong> – <a href="https://railway.app" style="color:var(--accent)">railway.app</a> — sign up with GitHub for easiest setup</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>Software on Your Windows PC</h3>
+  <ul>
+    <li><strong>Python 3.10+</strong> — needed to run and configure the agent</li>
+    <li><strong>Git</strong> — to push code to GitHub. Download at <a href="https://git-scm.com" style="color:var(--accent)">git-scm.com</a></li>
+    <li><strong>A terminal</strong> — Windows Command Prompt or PowerShell (run as Administrator for service install)</li>
+  </ul>
+</div>
+</section>
+
+<!-- ─── FOLDER STRUCTURE ──────────────────────────────── -->
+<section id="structure">
+<div class="phase-header">
+  <span class="phase-badge">REFERENCE</span>
+  <h2>Project Folder Structure</h2>
+</div>
+<div class="step">
+  <p>After cloning or extracting the repo, your folder looks like this:</p>
+  <div class="file-tree">
+<span class="ft-dir">sentinel/</span>
+├── <span class="ft-dir">agent/</span>                         <span class="ft-note">← Windows machine only</span>
+│   ├── <span class="ft-file">config.py</span>                 <span class="ft-note">← stores device_id + device_secret</span>
+│   ├── <span class="ft-file">setup_agent.py</span>            <span class="ft-note">← run this first on the laptop</span>
+│   ├── <span class="ft-file">service.py</span>                <span class="ft-note">← Windows Service wrapper</span>
+│   ├── <span class="ft-file">monitor.py</span>                <span class="ft-note">← heartbeat, folder guard, app control</span>
+│   ├── <span class="ft-file">camera.py</span>                 <span class="ft-note">← webcam capture</span>
+│   ├── <span class="ft-file">requirements.txt</span>          <span class="ft-note">← agent-only deps (no server code)</span>
+│   └── <span class="ft-dir">data/</span>                      <span class="ft-note">← auto-created at runtime</span>
+│       ├── <span class="ft-file">agent_config.json</span>     <span class="ft-note">← ⚠️ contains credentials, keep secure</span>
+│       ├── <span class="ft-file">offline_logs.json</span>     <span class="ft-note">← log buffer when server unreachable</span>
+│       └── <span class="ft-dir">logs/</span>                 <span class="ft-note">← rotating service log files</span>
+│
+├── <span class="ft-dir">server/</span>                        <span class="ft-note">← Railway deployment only</span>
+│   ├── <span class="ft-file">main.py</span>                   <span class="ft-note">← FastAPI entry point</span>
+│   ├── <span class="ft-file">requirements.txt</span>          <span class="ft-note">← server-only deps (no agent code)</span>
+│   ├── <span class="ft-dir">core/</span>
+│   │   ├── <span class="ft-file">config.py</span>             <span class="ft-note">← reads all env vars, fails if missing</span>
+│   │   ├── <span class="ft-file">database.py</span>           <span class="ft-note">← PostgreSQL engine</span>
+│   │   └── <span class="ft-file">security.py</span>           <span class="ft-note">← JWT + bcrypt device secrets</span>
+│   ├── <span class="ft-dir">api/</span>
+│   │   ├── <span class="ft-file">auth.py</span>               <span class="ft-note">← /auth/setup, /auth/token</span>
+│   │   ├── <span class="ft-file">devices.py</span>            <span class="ft-note">← registration, config poll, CRUD</span>
+│   │   ├── <span class="ft-file">logs.py</span>               <span class="ft-note">← batch log ingest + query</span>
+│   │   └── <span class="ft-file">photos.py</span>             <span class="ft-note">← photo upload + gallery</span>
+│   ├── <span class="ft-dir">models/</span>
+│   │   ├── <span class="ft-file">user.py</span>               <span class="ft-note">← Admin model</span>
+│   │   ├── <span class="ft-file">device.py</span>             <span class="ft-note">← Device model (with secret_hash)</span>
+│   │   └── <span class="ft-file">log.py</span>                <span class="ft-note">← LogEntry + IntruderPhoto models</span>
+│   └── <span class="ft-dir">templates/dashboard/</span>
+│       └── <span class="ft-file">index.html</span>            <span class="ft-note">← Bootstrap 5 SPA dashboard</span>
+│
+├── <span class="ft-file">.env.example</span>                   <span class="ft-note">← copy to .env for local dev</span>
+├── <span class="ft-file">Procfile</span>                       <span class="ft-note">← Railway start command</span>
+├── <span class="ft-file">railway.toml</span>                   <span class="ft-note">← Railway build config</span>
+└── <span class="ft-file">sentinel_agent.spec</span>            <span class="ft-note">← PyInstaller .exe build config</span>
+  </div>
+</div>
+</section>
+
+<!-- ─── HOW AUTH WORKS ────────────────────────────────── -->
+<section id="how-auth-works">
+<div class="phase-header">
+  <span class="phase-badge">SECURITY</span>
+  <h2>How Device Authentication Works</h2>
+</div>
+
+<div class="step">
+  <h3>Per-device secrets (not a shared token)</h3>
+  <p>The old system used one shared <code>DEVICE_API_TOKEN</code> for all agents — a single leaked token would compromise every device. The new system gives each device its own unique secret:</p>
+
+  <div style="overflow-x:auto; margin-top:.8rem;">
+    <table>
+      <thead><tr><th>#</th><th>Who</th><th>What happens</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>You (Railway)</td><td>Set <code>REGISTRATION_TOKEN</code> env var — a one-time secret for first registration only</td></tr>
+        <tr><td>2</td><td>Agent (first run)</td><td>Calls <code>POST /api/devices/register</code> with the <code>REGISTRATION_TOKEN</code></td></tr>
+        <tr><td>3</td><td>Server</td><td>Generates a unique <code>device_secret</code> (32 random bytes), stores only the <strong>bcrypt hash</strong></td></tr>
+        <tr><td>4</td><td>Server → Agent</td><td>Returns <code>device_secret</code> in plaintext <strong>once</strong> — agent saves it locally</td></tr>
+        <tr><td>5</td><td>Agent (all future calls)</td><td>Uses <code>Authorization: Bearer &lt;device_id&gt;:&lt;device_secret&gt;</code></td></tr>
+        <tr><td>6</td><td>Server</td><td>Looks up device by ID, verifies secret against bcrypt hash — never stores plaintext</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout info" style="margin-top:.8rem;">
+    <span class="callout-icon">ℹ️</span>
+    <div><p>If a device is compromised, you delete it from the dashboard and re-register. Other devices are completely unaffected.</p></div>
+  </div>
+</div>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════════════
+     PHASE 1 – SERVER DEPLOYMENT
+══════════════════════════════════════════════════════ -->
+<div class="progress-bar">
+  <div class="progress-segment current">Phase 1: Server</div>
+  <div class="progress-segment pending">Phase 2: Agent</div>
+  <div class="progress-segment pending">Phase 3: Use It</div>
+</div>
+
+<!-- ─── GITHUB ────────────────────────────────────────── -->
+<section id="github">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 1 — Push Code to GitHub</h2>
+</div>
+
+<div class="callout warn">
+  <span class="callout-icon">⚠️</span>
+  <div><p>Railway deploys directly from a GitHub repository. Push your code first — this is a one-time step.</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">1A</span>
+  <h3>Create a new GitHub repository</h3>
+  <ol>
+    <li>Go to <a href="https://github.com/new" style="color:var(--accent)">github.com/new</a></li>
+    <li>Name it <code>sentinel</code></li>
+    <li>Set it to <strong>Private</strong> — your security config shouldn't be public</li>
+    <li>Click <strong>Create repository</strong></li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">1B</span>
+  <h3>Push your sentinel folder to GitHub</h3>
+  <pre><code><span class="cmt"># Navigate to your sentinel folder</span>
+<span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel
+
+<span class="cmt"># Initialize and push</span>
+<span class="cmd">git init</span>
+<span class="cmd">git add</span> .
+<span class="cmd">git commit</span> -m <span class="str">"Initial commit – Sentinel project"</span>
+<span class="cmd">git branch</span> -M main
+<span class="cmd">git remote add</span> origin https://github.com/<span class="val">YOUR-USERNAME</span>/sentinel.git
+<span class="cmd">git push</span> -u origin main</code></pre>
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <div><p>Replace <code>YOUR-USERNAME</code> with your GitHub username. Git may ask for your credentials or a Personal Access Token if 2FA is enabled.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── RAILWAY PROJECT ────────────────────────────────── -->
+<section id="railway-project">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 2 — Create Railway Project</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">2A</span>
+  <h3>Sign up / Log in to Railway</h3>
+  <ol>
+    <li>Go to <a href="https://railway.app" style="color:var(--accent)">railway.app</a></li>
+    <li>Click <strong>Login</strong> → sign in with <strong>GitHub</strong> (connects automatically)</li>
+    <li>On the Dashboard, click <strong>+ New Project</strong></li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">2B</span>
+  <h3>Deploy from GitHub repo</h3>
+  <ol>
+    <li>Choose <strong>Deploy from GitHub repo</strong></li>
+    <li>Select your <code>sentinel</code> repository</li>
+    <li>Railway will detect the project and create a service — <strong>do not click Deploy yet</strong></li>
+  </ol>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div><p>The first deploy will fail until you add the PostgreSQL database and environment variables. That's expected — continue to the next steps.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── RAILWAY POSTGRES ───────────────────────────────── -->
+<section id="railway-postgres">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 3 — Add PostgreSQL Database</h2>
+</div>
+
+<div class="callout info">
+  <span class="callout-icon">ℹ️</span>
+  <div><p>Sentinel v2 uses PostgreSQL only — no SQLite. Railway's PostgreSQL plugin sets up the database and injects <code>DATABASE_URL</code> automatically.</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">3A</span>
+  <h3>Add the PostgreSQL plugin</h3>
+  <ol>
+    <li>In your Railway project, click <strong>+ New</strong></li>
+    <li>Select <strong>Database</strong> → <strong>Add PostgreSQL</strong></li>
+    <li>Railway provisions a PostgreSQL instance in ~30 seconds</li>
+    <li>Click on the new PostgreSQL service → go to the <strong>Variables</strong> tab</li>
+    <li>You'll see <code>DATABASE_URL</code> listed — Railway automatically shares this with your web service</li>
+  </ol>
+  <div class="callout success">
+    <span class="callout-icon">✅</span>
+    <div><p>You don't need to copy or paste the <code>DATABASE_URL</code>. Railway injects it automatically into your web service's environment.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── RAILWAY ENV VARS ───────────────────────────────── -->
+<section id="railway-env">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 4 — Set Environment Variables</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">4A</span>
+  <h3>Open your web service's Variables tab</h3>
+  <p>In Railway, click on your <strong>web service</strong> (not the PostgreSQL service) → click the <strong>Variables</strong> tab → click <strong>+ New Variable</strong> to add each one.</p>
+
+  <div style="overflow-x:auto; margin-top:.8rem;">
+    <table>
+      <thead><tr><th>Variable</th><th>Value</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>SECRET_KEY</code></td>
+          <td><em>Generate — see 4B</em></td>
+          <td style="color:var(--muted);">Signs JWT tokens for dashboard login</td>
+        </tr>
+        <tr>
+          <td><code>REGISTRATION_TOKEN</code></td>
+          <td><em>Generate — see 4C</em></td>
+          <td style="color:var(--muted);">One-time token agents use to register</td>
+        </tr>
+        <tr>
+          <td><code>ALLOW_SETUP</code></td>
+          <td><code>true</code></td>
+          <td style="color:var(--muted);">Enables /auth/setup to create admin. <strong>Set to false after Step 8.</strong></td>
+        </tr>
+        <tr>
+          <td><code>TOKEN_EXPIRE_MINUTES</code></td>
+          <td><code>1440</code></td>
+          <td style="color:var(--muted);">Dashboard session length (24h). Optional.</td>
+        </tr>
+        <tr>
+          <td><code>OFFLINE_THRESHOLD_SECONDS</code></td>
+          <td><code>60</code></td>
+          <td style="color:var(--muted);">Seconds before device marked offline. Optional.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout info" style="margin-top:.8rem;">
+    <span class="callout-icon">ℹ️</span>
+    <div><p><code>DATABASE_URL</code> is <strong>not</strong> listed here because Railway injects it automatically from the PostgreSQL plugin you added in Step 3.</p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">4B</span>
+  <h3>Generate SECRET_KEY</h3>
+  <p>Open Command Prompt on your PC and run:</p>
+  <pre><code><span class="cmd">python</span> -c <span class="str">"import secrets; print(secrets.token_hex(32))"</span>
+
+<span class="cmt"># Example output (yours will be different):</span>
+<span class="val">a3f8c2e1d4b7a9f0e2c5d8a1b4f7e0c3a6d9b2e5f8c1d4a7b0e3f6c9d2a5b8e1</span></code></pre>
+  <p>Copy the full output and paste it as the value for <code>SECRET_KEY</code> in Railway.</p>
+</div>
+
+<div class="step">
+  <span class="step-num">4C</span>
+  <h3>Generate REGISTRATION_TOKEN</h3>
+  <p>This is the one-time token your agents use when registering for the first time. Generate one and <strong>write it down</strong> — you'll need it in Phase 2.</p>
+  <pre><code><span class="cmd">python</span> -c <span class="str">"import secrets; print(secrets.token_hex(24))"</span>
+
+<span class="cmt"># Example output:</span>
+<span class="val">7f3a9c1e5b8d2f4a6e0c3b7d9a1f4c2e8b5d0a3f</span></code></pre>
+  <div class="callout warn">
+    <span class="callout-icon">📋</span>
+    <div>
+      <p><strong>Save the REGISTRATION_TOKEN somewhere safe</strong> (password manager, notes app). You'll paste it into the agent setup wizard in Phase 2.</p>
+      <p>Unlike the old <code>DEVICE_API_TOKEN</code>, this token is only used <em>once per device registration</em> — not for every API call.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ─── RAILWAY DEPLOY ─────────────────────────────────── -->
+<section id="railway-deploy">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 5 — Configure Start Command & Deploy</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">5A</span>
+  <h3>Set the start command</h3>
+  <p>In Railway → your web service → <strong>Settings</strong> tab → scroll to <strong>Deploy</strong> → set the <strong>Start Command</strong>:</p>
+  <pre><code>cd server && uvicorn main:app --host 0.0.0.0 --port $PORT</code></pre>
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <div><p>This is also already set in <code>railway.toml</code> and <code>Procfile</code> in the repo root, so Railway may detect it automatically.</p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">5B</span>
+  <h3>Set the build command</h3>
+  <p>In the same <strong>Settings</strong> → <strong>Build</strong> section, set:</p>
+  <pre><code>pip install -r server/requirements.txt</code></pre>
+  <p>This installs only the server dependencies — agent-specific packages like <code>pywin32</code> and <code>opencv</code> are excluded.</p>
+</div>
+
+<div class="step">
+  <span class="step-num">5C</span>
+  <h3>Trigger a deploy</h3>
+  <ol>
+    <li>Click <strong>Deploy</strong> (or push any commit to GitHub — Railway auto-deploys)</li>
+    <li>Click on the deploy to watch the build log</li>
+    <li>A successful deploy ends with: <code style="color:var(--green);">Application started</code></li>
+    <li>Railway shows a <strong>green checkmark</strong> and gives you a public URL</li>
+  </ol>
+  <div class="callout success">
+    <span class="callout-icon">✅</span>
+    <div><p>Your URL looks like: <code>https://sentinel-production-xxxx.up.railway.app</code> — copy and save it.</p></div>
+  </div>
+  <div class="callout warn" style="margin-top:.6rem;">
+    <span class="callout-icon">⚠️</span>
+    <div><p>If the deploy fails with <em>"Required environment variable 'X' is not set"</em> — go back and add the missing variable in the Variables tab, then redeploy.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── CREATE ADMIN ──────────────────────────────────── -->
+<section id="create-admin">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--purple);color:#000;">PHASE 1</span>
+  <h2>Step 6 — Create Admin Account</h2>
+</div>
+
+<div class="callout warn">
+  <span class="callout-icon">⚠️</span>
+  <div><p>The <code>/auth/setup</code> endpoint only works when <code>ALLOW_SETUP=true</code> is set in Railway AND no admin exists yet. You set this in Step 4 — it's active now.</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">6A</span>
+  <h3>Create the admin account via curl or the API docs</h3>
+  <p><strong>Option A — via terminal (curl):</strong></p>
+  <pre><code><span class="cmd">curl</span> -X POST https://<span class="val">your-server.up.railway.app</span>/auth/setup \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"username": "admin", "password": "YourStrongPassword123!"}'</span>
+
+<span class="cmt"># Success response:</span>
+<span class="str">{"detail": "Admin created successfully. Set ALLOW_SETUP=false now."}</span></code></pre>
+
+  <p style="margin-top:.8rem;"><strong>Option B — via Swagger UI:</strong></p>
+  <ol>
+    <li>Go to <code>https://your-server.up.railway.app/docs</code></li>
+    <li>Find <strong>POST /auth/setup</strong> → click <strong>Try it out</strong></li>
+    <li>Enter your username and password, click <strong>Execute</strong></li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">6B</span>
+  <h3>Immediately disable setup — IMPORTANT</h3>
+  <p>After the admin is created, go back to Railway → your web service → <strong>Variables</strong> and change:</p>
+  <pre><code><span class="kw">ALLOW_SETUP</span> = <span class="val">false</span></code></pre>
+  <p>Railway will redeploy automatically. The <code>/auth/setup</code> endpoint will now return <code>403 Forbidden</code> for all future requests — preventing anyone from overwriting your admin account.</p>
+  <div class="callout danger">
+    <span class="callout-icon">🔒</span>
+    <div><p><strong>Do not skip this.</strong> Leaving <code>ALLOW_SETUP=true</code> is a security hole — anyone who finds your URL could replace your admin account.</p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">6C</span>
+  <h3>Test the dashboard</h3>
+  <p>Visit your server URL (no path, just the root):</p>
+  <pre><code>https://your-server.up.railway.app</code></pre>
+  <p>You should see the Sentinel login page. Log in with the credentials you just created.</p>
+  <div class="callout success">
+    <span class="callout-icon">🎉</span>
+    <div><p><strong>Phase 1 complete!</strong> Your server, database, and dashboard are live on Railway.</p></div>
+  </div>
+</div>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════════════
+     PHASE 2 – AGENT SETUP
+══════════════════════════════════════════════════════ -->
+<div class="progress-bar">
+  <div class="progress-segment done">Phase 1: Server ✓</div>
+  <div class="progress-segment current">Phase 2: Agent</div>
+  <div class="progress-segment pending">Phase 3: Use It</div>
+</div>
+
+<!-- ─── PYTHON INSTALL ────────────────────────────────── -->
+<section id="python-install">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 7 — Install Python on Windows</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">7A</span>
+  <h3>Download and install Python</h3>
+  <ol>
+    <li>Go to <a href="https://python.org/downloads" style="color:var(--accent)">python.org/downloads</a></li>
+    <li>Click <strong>Download Python 3.12.x</strong></li>
+    <li>Run the installer</li>
+    <li><strong style="color:var(--yellow);">IMPORTANT:</strong> On the first screen, check ✅ <strong>"Add Python to PATH"</strong> before clicking Install Now</li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">7B</span>
+  <h3>Verify Python installed correctly</h3>
+  <p>Open a <strong>new</strong> Command Prompt and run:</p>
+  <pre><code><span class="cmd">python</span> --version
+<span class="cmt"># Should print: Python 3.12.x</span>
+
+<span class="cmd">pip</span> --version
+<span class="cmt"># Should print: pip 24.x from ...</span></code></pre>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div><p>If you get <code>"python is not recognized"</code>, close the window, open a new Command Prompt, and try again. If still failing, re-run the Python installer and check the "Add to PATH" box.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── AGENT DEPS ─────────────────────────────────────── -->
+<section id="agent-deps">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 8 — Install Agent Dependencies</h2>
+</div>
+
+<div class="step">
+  <span class="step-num">8A</span>
+  <h3>Navigate to the agent folder and install</h3>
+  <pre><code><span class="cmt"># Navigate to the agent folder (not the root)</span>
+<span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel\agent
+
+<span class="cmt"># Install agent-only dependencies</span>
+<span class="cmd">pip install</span> -r requirements.txt
+<span class="cmt"># Installs: requests, psutil, watchdog, opencv-python, pywin32</span></code></pre>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div>
+      <p>If you see an error about <code>pywin32</code>, run this extra command after installing:</p>
+      <p><code>python Scripts/pywin32_postinstall.py -install</code></p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ─── AGENT SETUP ────────────────────────────────────── -->
+<section id="agent-setup">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 9 — Run the Setup Wizard</h2>
+</div>
+
+<div class="callout info">
+  <span class="callout-icon">ℹ️</span>
+  <div>
+    <p>This wizard registers your device with the server. It uses the <code>REGISTRATION_TOKEN</code> you generated in Step 4C to prove it's an authorised device — then receives a unique <code>device_secret</code> that's stored locally.</p>
+    <p><strong>You only run this once per machine.</strong> After this, the agent uses the stored secret automatically.</p>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">9A</span>
+  <h3>Run the setup wizard</h3>
+  <pre><code><span class="cmt"># Make sure you're in the agent folder</span>
+<span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel\agent
+
+<span class="cmd">python</span> setup_agent.py</code></pre>
+</div>
+
+<div class="step">
+  <span class="step-num">9B</span>
+  <h3>Answer the prompts</h3>
+  <p>The wizard asks three questions:</p>
+  <div style="overflow-x:auto; margin:.8rem 0;">
+    <table>
+      <thead><tr><th>Prompt</th><th>What to enter</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>Server URL [current]:</code></td>
+          <td>Paste your Railway URL, e.g. <code>https://sentinel-xxxx.up.railway.app</code></td>
+        </tr>
+        <tr>
+          <td><code>Device name [current]:</code></td>
+          <td>A friendly name for this laptop, e.g. <code>Johns-Laptop</code></td>
+        </tr>
+        <tr>
+          <td><code>REGISTRATION_TOKEN:</code></td>
+          <td>Paste the token you generated in Step 4C and saved</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">9C</span>
+  <h3>Successful registration output</h3>
+  <p>If everything is correct you will see:</p>
+  <pre><code><span class="val">✅ Device registered successfully!</span>
+   Device ID:     xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   Device Secret: ********************  (stored in agent_config.json)</code></pre>
+  <p>The wizard stores the <code>device_secret</code> in <code>agent/data/agent_config.json</code>. The service reads it automatically from there — you never need to copy it manually.</p>
+
+  <div class="callout danger">
+    <span class="callout-icon">🔒</span>
+    <div><p><strong><code>agent/data/agent_config.json</code> contains your device credentials.</strong> Do not share it, commit it to git, or copy it to other machines. The <code>.gitignore</code> already excludes the <code>agent/data/</code> folder.</p></div>
+  </div>
+
+  <div class="callout warn" style="margin-top:.6rem;">
+    <span class="callout-icon">⚠️</span>
+    <div>
+      <p>If you see <code>❌ Registration failed: Invalid REGISTRATION_TOKEN</code> — the token you entered doesn't match the one set in Railway. Double-check for extra spaces or typos.</p>
+      <p>If you see a connection error — verify the server URL is correct and the Railway deploy is live.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ─── INSTALL SERVICE ────────────────────────────────── -->
+<section id="install-service">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2</span>
+  <h2>Step 10 — Install as Windows Service</h2>
+</div>
+
+<div class="callout danger">
+  <span class="callout-icon">🔑</span>
+  <div><p><strong>This step requires Administrator privileges.</strong> Right-click Command Prompt → "Run as administrator".</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">10A</span>
+  <h3>Open an Administrator Command Prompt</h3>
+  <ol>
+    <li>Press the <strong>Windows key</strong></li>
+    <li>Type <strong>cmd</strong></li>
+    <li>Right-click <strong>Command Prompt</strong> → <strong>"Run as administrator"</strong></li>
+    <li>Click Yes on the UAC prompt</li>
+  </ol>
+</div>
+
+<div class="step">
+  <span class="step-num">10B</span>
+  <h3>Install and start the service</h3>
+  <pre><code><span class="cmt"># Navigate to the agent folder</span>
+<span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel\agent
+
+<span class="cmt"># Install the Windows service</span>
+<span class="cmd">python</span> service.py install
+
+<span class="cmt"># Start it</span>
+<span class="cmd">python</span> service.py start</code></pre>
+</div>
+
+<div class="step">
+  <span class="step-num">10C</span>
+  <h3>Verify the service is running</h3>
+  <pre><code><span class="cmd">sc</span> query SentinelAgent
+
+<span class="cmt"># You should see:</span>
+<span class="cmt"># STATE              : 4  RUNNING</span></code></pre>
+  <p>You can also open <strong>Task Manager → Services tab</strong> and search for <strong>SentinelAgent</strong>.</p>
+  <div class="callout success">
+    <span class="callout-icon">✅</span>
+    <div><p>The service auto-starts every time Windows boots. Windows SCM is also configured to restart it automatically if it crashes.</p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">10D</span>
+  <h3>Service management commands (reference)</h3>
+  <pre><code><span class="cmt"># Stop the service</span>
+<span class="cmd">python</span> service.py stop
+
+<span class="cmt"># Restart the service</span>
+<span class="cmd">python</span> service.py restart
+
+<span class="cmt"># Remove the service entirely</span>
+<span class="cmd">python</span> service.py remove
+
+<span class="cmt"># View logs</span>
+<span class="cmd">type</span> <span class="path">agent\data\logs\sentinel_service.log</span></code></pre>
+</div>
+</section>
+
+<!-- ─── BUILD EXE ──────────────────────────────────────── -->
+<section id="build-exe">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--green);color:#000;">PHASE 2 — OPTIONAL</span>
+  <h2>Step 11 — Build .exe for Easy Distribution</h2>
+</div>
+
+<div class="callout info">
+  <span class="callout-icon">ℹ️</span>
+  <div><p>This step is optional. Building a <code>.exe</code> lets you run the agent on a machine without Python installed. If you're only installing on machines where you can install Python, skip this step.</p></div>
+</div>
+
+<div class="step">
+  <span class="step-num">11A</span>
+  <h3>Install PyInstaller and build</h3>
+  <pre><code><span class="cmt"># Install PyInstaller</span>
+<span class="cmd">pip install</span> pyinstaller
+
+<span class="cmt"># Navigate to the repo ROOT (not the agent subfolder)</span>
+<span class="cmd">cd</span> C:\Users\YourName\Downloads\sentinel
+
+<span class="cmt"># Build using the spec file</span>
+<span class="cmd">pyinstaller</span> sentinel_agent.spec</code></pre>
+</div>
+
+<div class="step">
+  <span class="step-num">11B</span>
+  <h3>Find your .exe and copy the config</h3>
+  <p>After the build finishes:</p>
+  <pre><code><span class="cmt"># Your .exe is here:</span>
+<span class="path">sentinel\dist\SentinelAgent.exe</span>
+
+<span class="cmt"># IMPORTANT: also copy the config data folder next to the .exe</span>
+<span class="cmd">xcopy</span> agent\data dist\data\ /E /I</code></pre>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div><p>The <code>.exe</code> reads credentials from <code>agent_config.json</code>. You must run <code>setup_agent.py</code> first (Step 9) before building — or copy the <code>data/</code> folder alongside the <code>.exe</code> when deploying to a new machine.</p></div>
+  </div>
+</div>
+
+<div class="step">
+  <span class="step-num">11C</span>
+  <h3>Install service from .exe (as Administrator)</h3>
+  <pre><code><span class="cmd">cd</span> dist
+<span class="cmd">SentinelAgent.exe</span> install
+<span class="cmd">SentinelAgent.exe</span> start</code></pre>
+</div>
+</section>
+
+<hr/>
+
+<!-- ══════════════════════════════════════════════════════
+     PHASE 3 – USING THE DASHBOARD
+══════════════════════════════════════════════════════ -->
+<div class="progress-bar">
+  <div class="progress-segment done">Phase 1: Server ✓</div>
+  <div class="progress-segment done">Phase 2: Agent ✓</div>
+  <div class="progress-segment current">Phase 3: Use It</div>
+</div>
+
+<!-- ─── LOGIN ─────────────────────────────────────────── -->
+<section id="login">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--yellow);color:#000;">PHASE 3</span>
+  <h2>Step 12 — Log Into Your Dashboard</h2>
+</div>
+
+<div class="step">
+  <h3>Access from any device</h3>
+  <p>Open any browser on any device (phone, tablet, another computer) and go to:</p>
+  <pre><code>https://your-server.up.railway.app</code></pre>
+  <p>Log in with the admin username and password you created in Step 6.</p>
+  <p>After a few seconds (up to 15), your device appears in the Dashboard with a <span style="background:rgba(63,185,80,.2); color:var(--green); padding:.1em .4em; border-radius:4px; font-size:.85em;">Online</span> status badge.</p>
+
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <div><p>Unlike Render's free tier, <strong>Railway does not spin down your server</strong>. The first page load is fast.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ─── SECURE MODE ────────────────────────────────────── -->
+<section id="secure-mode">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--yellow);color:#000;">PHASE 3</span>
+  <h2>Step 13 — Enable Secure Mode</h2>
+</div>
+
+<div class="step">
+  <h3>Toggle mode from the dashboard</h3>
+  <ol>
+    <li>On the Dashboard, find your device in the table</li>
+    <li>Click <strong>"Set Secure"</strong> next to it</li>
+    <li>The mode badge changes to <span style="background:rgba(248,81,73,.2); color:var(--red); padding:.1em .4em; border-radius:4px; font-size:.85em;">SECURE</span></li>
+    <li>Within 10 seconds the agent receives the change and activates protection</li>
+  </ol>
+</div>
+
+<div class="step">
+  <h3>What happens in Secure Mode</h3>
+  <ul>
+    <li>Blocked apps are <strong>killed immediately</strong> if they launch</li>
+    <li>Any file write/create in protected folders is <strong>detected and reverted</strong></li>
+    <li>A webcam photo is captured and uploaded on every security event</li>
+    <li>All events appear in the <strong>Logs</strong> tab in real time</li>
+  </ul>
+</div>
+</section>
+
+<!-- ─── SETTINGS ───────────────────────────────────────── -->
+<section id="settings">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--yellow);color:#000;">PHASE 3</span>
+  <h2>Step 14 — Configure Blocked Apps & Protected Folders</h2>
+</div>
+
+<div class="step">
+  <h3>Go to the Settings tab</h3>
+  <ol>
+    <li>Click <strong>Settings</strong> in the dashboard sidebar</li>
+    <li>Select your device from the dropdown</li>
+    <li>Two panels: <strong>Blocked Applications</strong> and <strong>Protected Folders</strong></li>
+  </ol>
+</div>
+
+<div class="two-col">
+  <div class="step">
+    <h3>Blocked Applications</h3>
+    <p>Enter executable names (one per line):</p>
+    <pre style="font-size:.8rem;"><code>chrome.exe
+excel.exe
+outlook.exe
+teams.exe
+discord.exe</code></pre>
+    <p>These processes are killed instantly in Secure Mode.</p>
+  </div>
+  <div class="step">
+    <h3>Protected Folders</h3>
+    <p>Enter full Windows paths (one per line):</p>
+    <pre style="font-size:.8rem;"><code>C:\Users\John\Documents\Private
+C:\Users\John\Desktop\Secrets
+D:\Work\Confidential</code></pre>
+    <p>Any file change here triggers an alert + webcam photo.</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>Save and sync</h3>
+  <p>Click <strong>Save</strong> on each panel. Changes sync to the agent within 10 seconds on the next poll cycle.</p>
+  <div class="callout success">
+    <span class="callout-icon">🎉</span>
+    <div><p><strong>You're all set!</strong> Sentinel is fully deployed and running. Your laptop is remotely protected.</p></div>
+  </div>
+</div>
+</section>
+
+<hr/>
+
+<!-- ─── TROUBLESHOOTING ────────────────────────────────── -->
+<section id="trouble">
+<div class="phase-header">
+  <span class="phase-badge" style="background:var(--red);color:#fff;">TROUBLESHOOTING</span>
+  <h2>Common Issues & Fixes</h2>
+</div>
+
+<div class="step">
+  <h3>🔴 Railway deploy fails with "Required environment variable not set"</h3>
+  <ul>
+    <li>Go to Railway → your web service → <strong>Variables</strong> tab</li>
+    <li>Check that <code>SECRET_KEY</code> and <code>REGISTRATION_TOKEN</code> are both added</li>
+    <li><code>DATABASE_URL</code> should be auto-injected from the PostgreSQL plugin — if it's missing, open the PostgreSQL service and verify it's in the same project</li>
+    <li>After adding missing variables, click <strong>Deploy</strong> to redeploy</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Device shows Offline in the dashboard</h3>
+  <ul>
+    <li>Check the service is running: <code>sc query SentinelAgent</code></li>
+    <li>If it's stopped, check the log: <code>type agent\data\logs\sentinel_service.log</code></li>
+    <li>A common cause is the agent not being registered — re-run <code>python setup_agent.py</code></li>
+    <li>Verify the server URL in <code>agent/data/agent_config.json</code> matches your Railway URL exactly</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Agent registration returns 401 Unauthorized</h3>
+  <ul>
+    <li>The <code>REGISTRATION_TOKEN</code> you entered doesn't match the one set in Railway</li>
+    <li>Open Railway → Variables → copy the exact value of <code>REGISTRATION_TOKEN</code></li>
+    <li>Re-run <code>python setup_agent.py</code> and paste it again carefully (no extra spaces)</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 /auth/setup returns 403 Forbidden</h3>
+  <ul>
+    <li>This means <code>ALLOW_SETUP</code> is not set to <code>true</code> in Railway — which is the intended behavior after initial setup</li>
+    <li>To create a new admin: temporarily set <code>ALLOW_SETUP=true</code> in Railway → redeploy → create admin → set back to <code>false</code></li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Service install says "Access Denied"</h3>
+  <ul>
+    <li>You must run Command Prompt as <strong>Administrator</strong></li>
+    <li>Search "cmd" in Start menu → right-click → <strong>Run as administrator</strong></li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Service starts then immediately stops</h3>
+  <ul>
+    <li>The most likely cause: <code>setup_agent.py</code> was not run before starting the service</li>
+    <li>Check the log: <code>type agent\data\logs\sentinel_service.log</code> — it will say "Agent is not registered"</li>
+    <li>Run <code>python setup_agent.py</code> first, then <code>python service.py start</code></li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Dashboard loads but no devices appear</h3>
+  <ul>
+    <li>Wait 15 seconds and refresh — the agent polls every 10 seconds</li>
+    <li>Check Railway logs: click your web service → <strong>Deployments</strong> → <strong>View Logs</strong></li>
+    <li>Look for a line like <code>POST /api/device/{id}/config</code> — if absent, the agent isn't reaching the server</li>
+  </ul>
+</div>
+
+<div class="step">
+  <h3>🔴 Re-registering a device (rotating credentials)</h3>
+  <p>If you need to reset a device's credentials (e.g. <code>agent_config.json</code> was lost or compromised):</p>
+  <pre><code><span class="cmt"># Simply re-run the setup wizard — it generates a new device_secret</span>
+<span class="cmd">python</span> setup_agent.py
+
+<span class="cmt"># Then restart the service</span>
+<span class="cmd">python</span> service.py restart</code></pre>
+  <p>The old secret is overwritten on the server. Other devices are completely unaffected.</p>
+</div>
+
+<div class="step">
+  <h3>🔴 Camera not capturing photos</h3>
+  <ul>
+    <li>Verify <code>opencv-python</code> is installed: <code>pip install opencv-python</code></li>
+    <li>Test your camera: <code>python -c "import cv2; cap = cv2.VideoCapture(0); print('OK' if cap.isOpened() else 'No camera')"</code></li>
+    <li>Close any other apps using the camera (Teams, Zoom, etc.)</li>
+  </ul>
+</div>
+</section>
+
+<!-- ─── FINAL CHECKLIST ────────────────────────────────── -->
+<section id="checklist">
+<div class="phase-header" style="margin-top:2rem;">
+  <span class="phase-badge" style="background:var(--green);color:#000;">CHECKLIST</span>
+  <h2>Everything Working? Final Checklist</h2>
+</div>
+<div class="step">
+  <ul class="checklist">
+    <li><span class="check-icon">✓</span> <span>Railway service shows <strong style="color:var(--green);">Active</strong> (green checkmark)</span></li>
+    <li><span class="check-icon">✓</span> <span>PostgreSQL plugin added to Railway project</span></li>
+    <li><span class="check-icon">✓</span> <span><code>ALLOW_SETUP</code> set back to <code>false</code> after creating admin</span></li>
+    <li><span class="check-icon">✓</span> <span>Dashboard loads at your Railway URL</span></li>
+    <li><span class="check-icon">✓</span> <span>Admin login works</span></li>
+    <li><span class="check-icon">✓</span> <span><code>python setup_agent.py</code> completed with ✅ success message</span></li>
+    <li><span class="check-icon">✓</span> <span><code>sc query SentinelAgent</code> shows <strong>RUNNING</strong></span></li>
+    <li><span class="check-icon">✓</span> <span>Device appears in dashboard (may take up to 15 seconds)</span></li>
+    <li><span class="check-icon">✓</span> <span>Mode toggle works (Open ↔ Secure)</span></li>
+    <li><span class="check-icon">✓</span> <span>Logs appear in Logs tab after toggling mode</span></li>
+    <li><span class="check-icon">✓</span> <span>Blocked app gets killed when launched in Secure Mode</span></li>
+    <li><span class="check-icon">✓</span> <span>Intruder photo appears in Photos tab after security event</span></li>
+  </ul>
+</div>
+</section>
+
+</main>
+</div>
+
+<script>
+const sections = document.querySelectorAll('section[id]');
+const links    = document.querySelectorAll('.sidebar a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+  links.forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
